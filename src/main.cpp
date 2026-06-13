@@ -1,18 +1,27 @@
 #include <Arduino.h>
 
-// put function declarations here:
-int myFunction(int, int);
-
 void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+  Serial.begin(115200);
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-}
 
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
+  // ── Step 1: Define a string ──────────────────────────
+  String text = "Hello";
+
+  // ── Step 2: Loop through each character ──────────────
+  for (int i = 0; i < text.length(); i++) {
+
+    char c = text[i];           // Get each character
+    int  ascii = (int)c;        // Convert char → ASCII number
+
+    // ── Step 3: Print Char and HEX ───────────────────────
+    Serial.print("'");
+    Serial.print(c);            // Show the character
+    Serial.print("'  →  HEX: ");
+    Serial.println(ascii, HEX); // Print as HEX (built-in Arduino)
+  }
+
+  Serial.println("--- Done ---");
+  delay(3000); // Wait 3 sec then repeat
 }
