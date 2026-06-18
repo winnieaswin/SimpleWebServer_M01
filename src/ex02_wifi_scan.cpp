@@ -7,7 +7,7 @@ void setup() {
 void loop() {
 
   // ── Step 1: Define a string ──────────────────────────
-  String text = "Hello";
+  String text = "Hello Module2";
 
   // ── Step 2: Loop through each character ──────────────
   for (int i = 0; i < text.length(); i++) {
@@ -18,7 +18,7 @@ void loop() {
     // ── Step 3: Print Char and HEX ───────────────────────
     Serial.print("'");
     Serial.print(c);            // Show the character
-    Serial.print("'  →  HEX: ");
+    Serial.print("'  ->  HEX: ");
     Serial.println(ascii, HEX); // Print as HEX (built-in Arduino)
   }
 
