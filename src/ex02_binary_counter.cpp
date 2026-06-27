@@ -12,7 +12,7 @@
  *   GPIO 14 = bit 2 (value 4)
  *   GPIO 27 = bit 1 (value 2)
  *   GPIO 26 = bit 0 (value 1)
- *   Each pin --> 330ohm resistor --> LED --> GND
+ *   Each pin --> 330ohm resistor --> LED --> GNDz
  */
 
 #include <Arduino.h>

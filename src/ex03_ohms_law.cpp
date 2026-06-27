@@ -1,65 +1,50 @@
-/**
- * Module 1 - Exercise 03 : Ohm's Law & Power (W = V x I)
- * 
- * Concepts covered:
- *   - V = I x R  (Ohm's law)
- *   - W = V x I  (Power formula)
- *   - ADC : reads analog voltage (0 → 3.3V mapped to 0 → 4095)
- *   - Scientific notation : milli(m), micro(µ), kilo(k)
- * 
- * Circuit:
- *   3.3V --> R1 (known, e.g. 1000 ohm) --> R2 (unknown) --> GND
- *                                      |
- *                                   GPIO34 (ADC input)
- * 
- *   By reading voltage at the middle point, we can calculate:
- *   - Current through circuit: I = V_source / (R1 + R2)
- *   - Power consumed: W = V x I
- */
-
 #include <Arduino.h>
+#include <esp_adc_cal.h>
 
-#define ADC_PIN     34      // GPIO34 = ADC input (input only pin)
-#define R1_OHM      1000.0  // Known resistor = 1k ohm
-#define V_SOURCE    3.3     // ESP32 supply voltage
-#define ADC_MAX     4095.0  // 12-bit ADC
+#define ADC_PIN     34
+#define R2_OHM      1000.0
+#define V_SOURCE    3.3
 #define DELAY_MS    1000
+#define SAMPLES     64
+
+esp_adc_cal_characteristics_t adc_chars;
 
 void setup() {
     Serial.begin(115200);
-    analogReadResolution(12);   // 12 bits = 0 to 4095
+
+    // Calibrate ADC using chip's eFuse Vref
+    analogReadResolution(12);
+    esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_12, ADC_WIDTH_BIT_12, 1100, &adc_chars);
+
     Serial.println("Module 1 - Ex03 : Ohm's Law & Power");
-    Serial.println("V = I x R    |    W = V x I");
     Serial.println("-------------------------------");
 }
 
 void loop() {
-    // Read ADC
-    int adcRaw = analogRead(ADC_PIN);
+    // Average samples using standard analogRead
+    uint32_t sum = 0;
+    // for (int i = 0; i < SAMPLES; i++) {
+    //     sum += analogRead(ADC_PIN);
+    // }
+    // uint32_t adcRaw = sum / SAMPLES;
 
-    // Convert ADC value to voltage
-    float vMeasured = (adcRaw / ADC_MAX) * V_SOURCE;
+    uint32_t adcRaw = analogRead(ADC_PIN);
 
-    // Voltage across R1 = V_source - V_measured
-    float vR1 = V_SOURCE - vMeasured;
+    // Convert raw to millivolts using calibration (instead of raw * 3.3 / 4095)
+    float vMeasured = esp_adc_cal_raw_to_voltage(adcRaw, &adc_chars) / 1000.0;
 
-    // Current through circuit: I = V / R (Ohm's law)
-    float current_A  = vR1 / R1_OHM;           // Amps
-    float current_mA = current_A * 1000.0;      // milliAmps (x10^-3)
+    // Ohm's law
+    float current_mA    = (vMeasured / R2_OHM) * 1000.0;
+    float vR1           = V_SOURCE - vMeasured;
+    float r1_calculated = (current_mA > 0) ? (vR1 / (current_mA / 1000.0)) : 0;
+    float power_mW      = V_SOURCE * (current_mA / 1000.0) * 1000.0;
 
-    // Unknown resistor R2 = V_measured / I
-    float r2 = (current_A > 0) ? (vMeasured / current_A) : 0;
-
-    // Power: W = V x I
-    float power_W  = V_SOURCE * current_A;
-    float power_mW = power_W * 1000.0;          // milliWatts
-
-    // Print results
     Serial.println("=== Measurements ===");
     Serial.print("ADC raw     : "); Serial.print(adcRaw); Serial.println(" / 4095");
     Serial.print("V measured  : "); Serial.print(vMeasured, 3); Serial.println(" V");
+    Serial.print("V across R1 : "); Serial.print(vR1, 3); Serial.println(" V");
     Serial.print("Current (I) : "); Serial.print(current_mA, 2); Serial.println(" mA");
-    Serial.print("R2 unknown  : "); Serial.print(r2, 1); Serial.println(" ohm");
+    Serial.print("R1 unknown  : "); Serial.print(r1_calculated, 1); Serial.println(" ohm");
     Serial.print("Power  (W)  : "); Serial.print(power_mW, 2); Serial.println(" mW");
     Serial.println();
 
